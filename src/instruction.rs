@@ -7,8 +7,8 @@ pub enum Opcode {
     DIV,
     HLT,
     JMP,
-    JMPF,
-    JMPB, // not impl yet
+    JMPF, // forward
+    JMPB, // backward, not impl yet
     IGL,
 }
 

@@ -152,7 +152,6 @@ mod tests {
         let mut test_vm = get_test_vm();
         test_vm.program = vec![0, 0, 1, 244, 0, 1, 1, 244, 1, 0, 1, 2]; // Remember, this is how we represent 500 using two u8s in little endian format
         test_vm.run();
-        println!("{:?}", test_vm.registers);
         assert_eq!(test_vm.registers[2], 1000);
     }
 
