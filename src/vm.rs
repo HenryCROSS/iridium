@@ -97,6 +97,10 @@ impl VM {
                 let value = self.registers[self.next_8_bits() as usize];
                 self.pc += value as usize;
             }
+            Opcode::JMPB => {
+                let value = self.registers[self.next_8_bits() as usize];
+                self.pc -= value as usize;
+            }
             _ => {
                 println!("Unrecognized opcode found! Terminating!");
                 return false;

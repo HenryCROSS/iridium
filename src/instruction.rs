@@ -6,9 +6,9 @@ pub enum Opcode {
     MUL,
     DIV,
     HLT,
-    JMP,
+    JMP,  // absolute
     JMPF, // forward
-    JMPB, // backward, not impl yet
+    JMPB, // backward
     IGL,
 }
 
@@ -34,6 +34,7 @@ impl From<u8> for Opcode {
             5 => Opcode::HLT,
             6 => Opcode::JMP,
             7 => Opcode::JMPF,
+            8 => Opcode::JMPB,
             _ => Opcode::IGL,
         }
     }
