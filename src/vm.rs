@@ -7,6 +7,8 @@ pub struct VM {
     pc: usize,
     program: Vec<u8>,
     remainder: u32,
+    // the result of the last comparison operation
+    equal_flag: bool,
 }
 
 impl VM {
@@ -16,6 +18,7 @@ impl VM {
             program: vec![],
             pc: 0,
             remainder: 0,
+            equal_flag: false,
         }
     }
 
@@ -101,6 +104,56 @@ impl VM {
                 let value = self.registers[self.next_8_bits() as usize];
                 self.pc -= value as usize;
             }
+            // $EQ r0, r1, None
+            Opcode::EQ => {
+                let reg1 = self.registers[self.next_8_bits() as usize];
+                let reg2 = self.registers[self.next_8_bits() as usize];
+
+                self.equal_flag = reg1 == reg2;
+                self.next_8_bits();
+            }
+            Opcode::NEQ => {
+                let reg1 = self.registers[self.next_8_bits() as usize];
+                let reg2 = self.registers[self.next_8_bits() as usize];
+
+                self.equal_flag = reg1 != reg2;
+                self.next_8_bits();
+            }
+            Opcode::GT => {
+                let reg1 = self.registers[self.next_8_bits() as usize];
+                let reg2 = self.registers[self.next_8_bits() as usize];
+
+                self.equal_flag = reg1 > reg2;
+                self.next_8_bits();
+            }
+            Opcode::LT => {
+                let reg1 = self.registers[self.next_8_bits() as usize];
+                let reg2 = self.registers[self.next_8_bits() as usize];
+
+                self.equal_flag = reg1 < reg2;
+                self.next_8_bits();
+            }
+            Opcode::GTQ => {
+                let reg1 = self.registers[self.next_8_bits() as usize];
+                let reg2 = self.registers[self.next_8_bits() as usize];
+
+                self.equal_flag = reg1 >= reg2;
+                self.next_8_bits();
+            }
+            Opcode::LTQ => {
+                let reg1 = self.registers[self.next_8_bits() as usize];
+                let reg2 = self.registers[self.next_8_bits() as usize];
+
+                self.equal_flag = reg1 <= reg2;
+                self.next_8_bits();
+            }
+            Opcode::JEQ => {
+                let reg = self.next_8_bits() as usize;
+                let target = self.registers[reg];
+                if self.equal_flag {
+                    self.pc = target as usize;
+                }
+            }
             _ => {
                 println!("Unrecognized opcode found! Terminating!");
                 return false;
@@ -175,5 +228,28 @@ mod tests {
         test_vm.program = vec![7, 0, 0, 0, 6, 0, 0, 0];
         test_vm.run_once();
         assert_eq!(test_vm.pc, 4);
+    }
+
+    #[test]
+    fn test_eq_opcode() {
+        let mut test_vm = get_test_vm();
+        test_vm.registers[0] = 10;
+        test_vm.registers[1] = 10;
+        test_vm.program = vec![9, 0, 1, 0, 9, 0, 1, 0];
+        test_vm.run_once();
+        assert_eq!(test_vm.equal_flag, true);
+        test_vm.registers[1] = 20;
+        test_vm.run_once();
+        assert_eq!(test_vm.equal_flag, false);
+    }
+
+    #[test]
+    fn test_jeq_opcode() {
+        let mut test_vm = get_test_vm();
+        test_vm.registers[0] = 7;
+        test_vm.equal_flag = true;
+        test_vm.program = vec![15, 0, 0, 0, 17, 0, 0, 0, 17, 0, 0, 0];
+        test_vm.run_once();
+        assert_eq!(test_vm.pc, 7);
     }
 }
