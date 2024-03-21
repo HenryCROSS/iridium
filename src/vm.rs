@@ -2,10 +2,10 @@ use crate::instruction::Opcode;
 
 pub struct VM {
     // it could know at compile time as list type
-    registers: [i32; 32],
+    pub registers: [i32; 32],
     // program counter
     pc: usize,
-    program: Vec<u8>,
+    pub program: Vec<u8>,
     remainder: u32,
     // the result of the last comparison operation
     equal_flag: bool,
@@ -39,6 +39,10 @@ impl VM {
         let result = ((self.program[self.pc] as u16) << 8) | self.program[self.pc + 1] as u16;
         self.pc += 2;
         return result;
+    }
+
+    pub fn add_byte(&mut self, byte: u8) {
+        self.program.push(byte);
     }
 
     /// Loops as long as instructions can be executed.
