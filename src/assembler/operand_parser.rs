@@ -1,0 +1,39 @@
+use crate::assembler::Token;
+use nom::{
+    bytes::complete::tag,
+    character::complete::{digit1, multispace0},
+    combinator::map_res,
+    sequence::{delimited, preceded},
+    IResult,
+};
+
+pub fn integer_operand(input: &str) -> IResult<&str, Token> {
+    delimited(
+        multispace0,
+        preceded(
+            tag("#"),
+            map_res(digit1, |digits: &str| {
+                digits
+                    .parse::<u8>()
+                    .map(|value| Token::IntegerOperand { value })
+            }),
+        ),
+        multispace0
+    )(input)
+}
+
+#[test]
+fn test_parse_integer_operand() {
+    use super::*;
+
+    // Test a valid integer operand
+    let result = integer_operand("#10");
+    assert_eq!(result.is_ok(), true);
+    let (rest, value) = result.unwrap();
+    assert_eq!(rest, "");
+    assert_eq!(value, Token::IntegerOperand { value: 10 });
+
+    // Test an invalid one (missing the #)
+    let result = integer_operand("10");
+    assert_eq!(result.is_ok(), false);
+}
