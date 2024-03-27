@@ -6,6 +6,7 @@ pub struct VM {
     // program counter
     pc: usize,
     pub program: Vec<u8>,
+    heap: Vec<u8>,
     remainder: u32,
     // the result of the last comparison operation
     equal_flag: bool,
@@ -16,6 +17,7 @@ impl VM {
         VM {
             registers: [0; 32],
             program: vec![],
+            heap: vec![],
             pc: 0,
             remainder: 0,
             equal_flag: false,
@@ -43,6 +45,12 @@ impl VM {
 
     pub fn add_byte(&mut self, byte: u8) {
         self.program.push(byte);
+    }
+
+    pub fn add_bytes(&mut self, bytes: Vec<u8>) {
+        for b in bytes {
+            self.add_byte(b);
+        }
     }
 
     /// Loops as long as instructions can be executed.
@@ -137,14 +145,14 @@ impl VM {
                 self.equal_flag = reg1 < reg2;
                 self.next_8_bits();
             }
-            Opcode::GTQ => {
+            Opcode::GTE => {
                 let reg1 = self.registers[self.next_8_bits() as usize];
                 let reg2 = self.registers[self.next_8_bits() as usize];
 
                 self.equal_flag = reg1 >= reg2;
                 self.next_8_bits();
             }
-            Opcode::LTQ => {
+            Opcode::LTE => {
                 let reg1 = self.registers[self.next_8_bits() as usize];
                 let reg2 = self.registers[self.next_8_bits() as usize];
 
@@ -157,6 +165,27 @@ impl VM {
                 if self.equal_flag {
                     self.pc = target as usize;
                 }
+            }
+            Opcode::NOP => {
+                self.next_8_bits();
+                self.next_8_bits();
+                self.next_8_bits();
+            }
+            Opcode::ALOC => {
+                let reg = self.next_8_bits() as usize;
+                let bytes = self.registers[reg];
+                let new_end = self.heap.len() as i32 + bytes;
+                self.heap.resize(new_end as usize, 0);
+            }
+            Opcode::INC => {
+                let reg = self.next_8_bits() as usize;
+                let target = self.registers[reg];
+                self.registers[reg] = target + 1;
+            }
+            Opcode::DEC => {
+                let reg = self.next_8_bits() as usize;
+                let target = self.registers[reg];
+                self.registers[reg] = target - 1;
             }
             _ => {
                 println!("Unrecognized opcode found! Terminating!");
@@ -255,5 +284,14 @@ mod tests {
         test_vm.program = vec![15, 0, 0, 0, 17, 0, 0, 0, 17, 0, 0, 0];
         test_vm.run_once();
         assert_eq!(test_vm.pc, 7);
+    }
+
+    #[test]
+    fn test_aloc_opcode() {
+        let mut test_vm = get_test_vm();
+        test_vm.registers[0] = 1024;
+        test_vm.program = vec![17, 0, 0, 0];
+        test_vm.run_once();
+        assert_eq!(test_vm.heap.len(), 1024);
     }
 }

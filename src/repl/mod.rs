@@ -1,7 +1,11 @@
+use crate::assembler::program_parsers::program;
+use crate::assembler::SymbolTable;
 use crate::vm::VM;
-use std::io;
+use std::fs::File;
+use std::io::{self, Read};
 use std::io::Write;
 use std::num::ParseIntError;
+use std::path::Path;
 use std::{self, result};
 
 /// Core structure for the REPL for the Assembler
@@ -38,6 +42,8 @@ impl REPL {
             // store history
             self.command_buffer.push(buffer.to_string());
 
+            // let lower_case = buffer.to_lowercase();
+            // let buffer = lower_case.as_str();
             match buffer {
                 ".quit" => {
                     println!("Farewell! Have a great day!");
@@ -60,18 +66,43 @@ impl REPL {
                     println!("{:#?}", self.vm.registers);
                     println!("End of Register Listing")
                 }
-                _ => {
-                    let results = self.parse_hex(buffer);
-                    match results {
-                        Ok(bytes) => {
-                            for byte in bytes {
-                                self.vm.add_byte(byte)
-                            }
-                        }
-                        Err(_e) => {
-                            println!("Unable to decode hex string. Please enter 4 groups of 2 hex characters.")
+                ".load_file" => {
+                    print!("Please enter the path to the file you wish to load: ");
+                    io::stdout().flush().expect("Unable to flush stdout");
+                    let mut tmp = String::new();
+                    stdin
+                        .read_line(&mut tmp)
+                        .expect("Unable to read line from user");
+                    let tmp = tmp.trim();
+                    let filename = Path::new(&tmp);
+                    let mut f = File::open(Path::new(&filename)).expect("File not found");
+                    let mut contents = String::new();
+                    f.read_to_string(&mut contents)
+                        .expect("There was an error reading from the file");
+                    let program = match program(&contents) {
+                        // Rusts pattern matching is pretty powerful an can even be nested
+                        Ok((remainder, program)) => program,
+                        Err(e) => {
+                            println!("Unable to parse input: {:?}", e);
+                            continue;
                         }
                     };
+                    let symbols = SymbolTable::new();
+                    self.vm.program.append(&mut program.to_bytes(&symbols));
+                }
+                _ => {
+                    let parsed_program = program(buffer);
+                    if !parsed_program.is_ok() {
+                        println!("Unable to parse input");
+                        continue;
+                    }
+                    let (_, result) = parsed_program.unwrap();
+                    let symbols = SymbolTable::new();
+                    let bytecode = result.to_bytes(&symbols);
+
+                    for byte in bytecode {
+                        self.vm.add_byte(byte);
+                    }
                     self.vm.run_once();
                 }
             }
