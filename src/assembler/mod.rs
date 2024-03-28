@@ -50,6 +50,9 @@ pub struct Assembler {
     pub symbols: SymbolTable,
 }
 
+pub const PIE_HEADER_PREFIX: [u8; 4] = [45, 50, 49, 45];
+pub const PIE_HEADER_LENGTH: usize = 64;
+
 impl Assembler {
     pub fn new() -> Assembler {
         Assembler {
@@ -61,8 +64,14 @@ impl Assembler {
     pub fn assemble(&mut self, raw: &str) -> Option<Vec<u8>> {
         match program(raw) {
             Ok((_remainder, program)) => {
+                // First get the header so we can smush it into the bytecode letter
+                let mut assembled_program = self.write_pie_header();
                 self.process_first_phase(&program);
-                Some(self.process_second_phase(&program))
+                let mut body = self.process_second_phase(&program);
+
+                // Merge the header with the populated body vector
+                assembled_program.append(&mut body);
+                Some(assembled_program)
             }
             Err(e) => {
                 println!("There was an error assembling the code: {:?}", e);
@@ -100,6 +109,17 @@ impl Assembler {
             }
             c += 4;
         }
+    }
+
+    fn write_pie_header(&self) -> Vec<u8> {
+        let mut header = vec![];
+        for byte in PIE_HEADER_PREFIX.into_iter() {
+            header.push(byte.clone());
+        }
+        while header.len() <= PIE_HEADER_LENGTH {
+            header.push(0 as u8);
+        }
+        header
     }
 }
 
@@ -154,8 +174,7 @@ mod tests {
     #[test]
     fn test_assemble_program() {
         let mut asm = Assembler::new();
-        let test_string =
-            "load $0 #100\n
+        let test_string = "load $0 #100\n
             load $1 #1\n
             load $2 #0\n
             test: inc $0\n
@@ -164,9 +183,9 @@ mod tests {
             hlt";
         let program = asm.assemble(test_string).unwrap();
         let mut vm = VM::new();
-        assert_eq!(program.len(), 21);
+        assert_eq!(program.len(), 86);
         vm.add_bytes(program);
-        assert_eq!(vm.program.len(), 21);
+        assert_eq!(vm.program.len(), 86);
         println!("{:?}", vm.program);
     }
 }

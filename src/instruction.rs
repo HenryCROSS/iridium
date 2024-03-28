@@ -68,7 +68,7 @@ impl<'a> From<&'a str> for Opcode {
             "load" => Opcode::LOAD,
             "add" => Opcode::ADD,
             "sub" => Opcode::SUB,
-            "mul" => Opcode::DIV,
+            "mul" => Opcode::MUL,
             "div" => Opcode::DIV,
             "hlt" => Opcode::HLT,
             "jmp" => Opcode::JMP,
