@@ -28,9 +28,7 @@ impl Program {
 }
 
 pub fn program(input: &str) -> IResult<&str, Program> {
-    map(many1(instruction), |instructions| Program {
-        instructions,
-    })(input)
+    map(many1(instruction), |instructions| Program { instructions })(input)
 }
 
 mod tests {
@@ -38,7 +36,6 @@ mod tests {
 
     #[test]
     fn test_parse_program() {
-
         let result = program("load $0 #100\nload $3 #120");
         assert_eq!(result.is_ok(), true);
         let (leftover, p) = result.unwrap();

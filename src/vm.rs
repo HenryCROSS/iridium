@@ -29,7 +29,7 @@ impl VM {
         self.pc += 1;
         return opcode;
     }
-
+    
     fn next_8_bits(&mut self) -> u8 {
         let result = self.program[self.pc];
         self.pc += 1;
