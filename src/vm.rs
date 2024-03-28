@@ -61,6 +61,9 @@ impl VM {
 
         if is_not_done {
             self.pc += 65;
+        } else {
+            println!("The file format is not current");
+            std::process::exit(1);
         }
 
         while is_not_done {
@@ -240,8 +243,9 @@ mod tests {
         let mut test_vm = VM::new();
         let test_bytes = vec![5, 0, 0, 0];
         test_vm.program = test_bytes;
+        test_vm.program = prepend_header(test_vm.program);
         test_vm.run();
-        assert_eq!(test_vm.pc, 1);
+        assert_eq!(test_vm.pc, 66);
     }
 
     #[test]
@@ -249,14 +253,16 @@ mod tests {
         let mut test_vm = VM::new();
         let test_bytes = vec![200, 0, 0, 0];
         test_vm.program = test_bytes;
+        test_vm.program = prepend_header(test_vm.program);
         test_vm.run();
-        assert_eq!(test_vm.pc, 1);
+        assert_eq!(test_vm.pc, 66);
     }
 
     #[test]
     fn test_load_opcode() {
         let mut test_vm = get_test_vm();
         test_vm.program = vec![0, 0, 1, 244]; // Remember, this is how we represent 500 using two u8s in little endian format
+        test_vm.program = prepend_header(test_vm.program);
         test_vm.run();
         assert_eq!(test_vm.registers[0], 500);
     }
@@ -265,6 +271,7 @@ mod tests {
     fn test_add_opcode() {
         let mut test_vm = get_test_vm();
         test_vm.program = vec![0, 0, 1, 244, 0, 1, 1, 244, 1, 0, 1, 2]; // Remember, this is how we represent 500 using two u8s in little endian format
+        test_vm.program = prepend_header(test_vm.program);
         test_vm.run();
         assert_eq!(test_vm.registers[2], 1000);
     }
