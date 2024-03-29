@@ -1,5 +1,5 @@
 use crate::assembler::program_parsers::program;
-use crate::assembler::SymbolTable;
+use crate::assembler::symbols::SymbolTable;
 use crate::vm::VM;
 use std::fs::File;
 use std::io::{self, Read};

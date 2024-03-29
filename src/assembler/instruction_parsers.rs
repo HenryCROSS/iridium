@@ -50,13 +50,49 @@ impl AssemblerInstruction {
         return results;
     }
 
+    pub fn get_string_constant(&self) -> Option<String> {
+        if let Some(Token::IrString { name }) = &self.operand1 {
+            Some(name.to_string())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_i32_constant(&self) -> Option<i32> {
+        if let Some(Token::IntegerOperand { value }) = &self.operand1 {
+            Some(*value)
+        } else {
+            None
+        }
+    }
+
+    pub fn is_opcode(&self) -> bool {
+        self.opcode.is_some()
+    }
+
+    pub fn has_operands(&self) -> bool {
+        self.operand1.is_some() || self.operand2.is_some() || self.operand3.is_some()
+    }
+
+    pub fn is_directive(&self) -> bool {
+        self.directive.is_some()
+    }
+
+    pub fn get_directive_name(&self) -> Option<String> {
+        if let Some(Token::Directive { name }) = &self.directive {
+            Some(name.to_string())
+        } else {
+            None
+        }
+    }
+
     pub fn is_label(&self) -> bool {
         self.label.is_some()
     }
 
-    pub fn label_name(&self) -> Option<String> {
-        if let Some(Token::LabelDeclaration { name }) = self.label.clone() {
-            Some(name)
+    pub fn get_label_name(&self) -> Option<String> {
+        if let Some(Token::LabelDeclaration { name }) = &self.label {
+            Some(name.to_string())
         } else {
             None
         }

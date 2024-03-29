@@ -11,6 +11,7 @@ pub struct VM {
     remainder: u32,
     // the result of the last comparison operation
     equal_flag: bool,
+    ro_data: Vec<u8>,
 }
 
 impl VM {
@@ -22,6 +23,7 @@ impl VM {
             pc: 0,
             remainder: 0,
             equal_flag: false,
+            ro_data: vec![],
         }
     }
 
@@ -62,7 +64,7 @@ impl VM {
         if is_not_done {
             self.pc += 65;
         } else {
-            println!("The file format is not current");
+            println!("The header is not current");
             std::process::exit(1);
         }
 
@@ -194,6 +196,29 @@ impl VM {
                 let reg = self.next_8_bits() as usize;
                 let target = self.registers[reg];
                 self.registers[reg] = target - 1;
+            }
+            Opcode::PRTS => {
+                // PRTS takes one operand, either a starting index in the read-only section of the bytecode
+                // or a symbol (in the form of @symbol_name), which will look up the offset in the symbol table.
+                // This instruction then reads each byte and prints it, until it comes to a 0x00 byte, which indicates
+                // termination of the string
+                let starting_offset = self.next_16_bits() as usize;
+                let mut ending_offset = starting_offset;
+                let slice = self.ro_data.as_slice();
+                // TODO: Find a better way to do this. Maybe we can store the byte length and not null terminate? Or some form of caching where we
+                // go through the entire ro_data on VM startup and find every string and its ending byte location?
+                while slice[ending_offset] != 0 {
+                    ending_offset += 1;
+                }
+                let result = std::str::from_utf8(&slice[starting_offset..ending_offset]);
+                match result {
+                    Ok(s) => {
+                        print!("{}", s);
+                    }
+                    Err(e) => {
+                        println!("Error decoding string for prts instruction: {:#?}", e)
+                    }
+                };
             }
             _ => {
                 println!("Unrecognized opcode found! Terminating!");

@@ -1,8 +1,5 @@
 use nom::{
-    character::complete::{alpha1, multispace0},
-    combinator::map,
-    sequence::delimited,
-    IResult,
+    bytes::complete::{tag, take_until}, character::complete::{alpha1, multispace0}, combinator::map, sequence::delimited, IResult
 };
 
 use super::Token;
